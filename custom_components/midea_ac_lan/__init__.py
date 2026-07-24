@@ -10,6 +10,8 @@ integration load process:
 """
 
 import logging
+from functools import partial
+from inspect import signature
 from typing import Any, cast
 
 import homeassistant.helpers.config_validation as cv
@@ -50,6 +52,44 @@ from .const import (
 from .midea_devices import MIDEA_DEVICES
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _select_device_compatible(
+    *,
+    name: str,
+    device_id: int,
+    device_type: int,
+    ip_address: str,
+    port: int,
+    token: str,
+    key: str,
+    protocol: ProtocolVersion,
+    model: str,
+    subtype: int,
+    customize: str,
+    mac: str | None,
+    serial_number: str | None,
+) -> MideaDevice:
+    """Call midealocal.device_selector with the args its installed version supports."""
+    selector_kwargs: dict[str, Any] = {
+        "name": name,
+        "device_id": device_id,
+        "device_type": device_type,
+        "ip_address": ip_address,
+        "port": port,
+        "token": token,
+        "key": key,
+        "device_protocol": protocol,
+        "model": model,
+        "subtype": subtype,
+        "customize": customize,
+    }
+    selector_params = signature(device_selector).parameters
+    if "mac" in selector_params:
+        selector_kwargs["mac"] = mac
+    if "serial_number" in selector_params:
+        selector_kwargs["serial_number"] = serial_number
+    return device_selector(**selector_kwargs)
 
 
 async def update_listener(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
@@ -217,43 +257,47 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
     if protocol == ProtocolVersion.V3 and (key == "" or token == ""):
         _LOGGER.error("For V3 devices, the key and the token is required")
         return False
-    # device_selector in `midealocal/devices/__init__.py`
+    selector = partial(
+        _select_device_compatible,
+        name=name,
+        device_id=device_id,
+        device_type=device_type,
+        ip_address=ip_address,
+        port=port,
+        token=token,
+        key=key,
+        protocol=protocol,
+        model=model,
+        subtype=subtype,
+        customize=customize,
+        mac=mac,
+        serial_number=serial_number,
+    )
     # hass core version >= 2024.3
     if (MAJOR_VERSION, MINOR_VERSION) >= (2024, 3):
-        device = await hass.async_add_import_executor_job(
-            device_selector,
-            name,
-            device_id,
-            device_type,
-            ip_address,
-            port,
-            token,
-            key,
-            protocol,
-            model,
-            subtype,
-            customize,
-            mac,
-            serial_number,
-        )
+        device = await hass.async_add_import_executor_job(selector)
     # hass core version < 2024.3
     else:
-        device = device_selector(
-            name=name,
-            device_id=device_id,
-            device_type=device_type,
-            ip_address=ip_address,
-            port=port,
-            token=token,
-            key=key,
-            device_protocol=protocol,
-            model=model,
-            subtype=subtype,
-            customize=customize,
-            mac=mac,
-            serial_number=serial_number,
-        )
+        device = selector()
     if device:
+        if protocol == ProtocolVersion.V3 and device_type == DeviceType.AC and subtype == 4096:
+            # This AC subtype can authenticate successfully, answer normal AC
+            # queries for a while, and then leave the integration stuck on a
+            # dead session until the device object is rebuilt. Recycle the TCP
+            # session periodically so HA re-authenticates on its own.
+            if hasattr(device, "set_connection_lifetime"):
+                device.set_connection_lifetime(300)
+                _LOGGER.info(
+                    "Enabled periodic LAN session recycling for Midea AC subtype 4096"
+                    " (device %s)",
+                    device_id,
+                )
+            else:
+                _LOGGER.warning(
+                    "Installed midealocal does not support connection lifetime"
+                    " recycling for device %s; using compatibility mode",
+                    device_id,
+                )
         if refresh_interval is not None:
             device.set_refresh_interval(refresh_interval)
         device.open()

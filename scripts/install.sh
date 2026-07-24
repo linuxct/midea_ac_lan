@@ -7,7 +7,7 @@
 set -e
 
 [ -z "$DOMAIN" ] && DOMAIN="midea_ac_lan"
-[ -z "$REPO_PATH" ] && REPO_PATH="wuwentao/midea_ac_lan"
+[ -z "$REPO_PATH" ] && REPO_PATH="linuxct/midea_ac_lan"
 REPO_NAME=$(basename "$REPO_PATH")
 
 [ -z "$ARCHIVE_TAG" ] && ARCHIVE_TAG="$1"

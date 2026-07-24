@@ -1,7 +1,7 @@
 # Midea AC LAN
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration)
-[![Stable](https://img.shields.io/github/v/release/wuwentao/midea_ac_lan)](https://github.com/wuwentao/midea_ac_lan/releases/latest)
+[![Stable](https://img.shields.io/github/v/release/linuxct/midea_ac_lan)](https://github.com/linuxct/midea_ac_lan/releases/latest)
 [![Super-Linter](https://github.com/wuwentao/midea_ac_lan/actions/workflows/linter.yml/badge.svg)](https://github.com/marketplace/actions/super-linter)
 
 English | [简体中文](README_hans.md) | [Discord Chat](https://discord.com/invite/ZWdd2fXndn) | [QQ Group](https://qm.qq.com/q/l53SGEwlZ6)
@@ -91,16 +91,21 @@ please check your device documents and supported feature in below table links.
 > [!IMPORTANT]
 > Make sure you have installed HACS in Home Assistant using the [HACS install guide](https://hacs.xyz/docs/use/download/download/)
 
-[![Open your Home Assistant instance and open "midea_ac_lan" inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=wuwentao&repository=midea_ac_lan)
+[![Open your Home Assistant instance and open "midea_ac_lan" inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=linuxct&repository=midea_ac_lan)
 
 **Restart Home Assistant**.
+
+Fork note: the published HACS release zip rewrites the `midea-local`
+dependency to a wheel from the same GitHub owner's `midealocal` releases, so a
+forked `midea_ac_lan` release automatically installs the matching forked
+library instead of PyPI. See [Fork Release Sync](doc/fork_release.md).
 
 ### Option 2: Install with Script
 
 > run this script in HA Terminal or SSH add-on
 
 ```shell
-wget -O - https://github.com/wuwentao/midea_ac_lan/raw/main/scripts/install.sh | ARCHIVE_TAG=latest bash -
+wget -O - https://github.com/linuxct/midea_ac_lan/raw/main/scripts/install.sh | ARCHIVE_TAG=latest bash -
 ```
 
 ### Option 3: Manual Install
@@ -201,5 +206,9 @@ git clone https://github.com/wuwentao/midea_ac_lan.git
 cd midea_ac_lan
 ./scripts/setup.sh
 ```
+
+If a sibling `../midea-local` or `../midealocal` checkout exists, `setup.sh`
+reinstalls that checkout in editable mode so integration and library changes
+can be developed together.
 
 See [CONTRIBUTING](.github/CONTRIBUTING.md) for full setup, running Home Assistant locally, and the code style / commit rules.

@@ -13,6 +13,16 @@ cd "$(dirname "$0")/.."
 # uv automatically downloads the Python version pinned in .python-version if needed.
 uv sync
 
+# When developing the integration and the library together, prefer a sibling
+# checkout of midea-local/midealocal over the PyPI fallback pinned in pyproject.
+for candidate in ../midea-local ../midealocal; do
+    if [ -f "$candidate/setup.py" ]; then
+        echo "Installing sibling midea-local checkout from $candidate"
+        uv pip install --reinstall -e "$candidate"
+        break
+    fi
+done
+
 # Install the git hooks (pre-commit + commit-msg for Conventional Commits).
 uv run pre-commit install
 uv run pre-commit install --hook-type commit-msg
