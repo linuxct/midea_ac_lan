@@ -50,7 +50,7 @@ jobs:
           python-version: "3.14"
       - name: Build HACS release zip
         run: |
-          dst_dir="/github/workspace/artifacts"
+          dst_dir="$GITHUB_WORKSPACE/artifacts"
           mkdir -p "$dst_dir" || exit 1
           python3 scripts/build_hacs_release.py || exit 1
           cp dist/midea_ac_lan.zip "$dst_dir/" || exit 1
@@ -59,7 +59,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: midea_ac_lan.zip
-          path: /github/workspace/artifacts
+          path: artifacts
 
   upload_release:
     needs: generate_zip
