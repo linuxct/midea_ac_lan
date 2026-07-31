@@ -1,1 +1,1 @@
-midea-local==6.11.0
+midea-local==6.11.1
